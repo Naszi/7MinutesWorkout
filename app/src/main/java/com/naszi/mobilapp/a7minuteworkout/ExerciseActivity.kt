@@ -1,5 +1,6 @@
 package com.naszi.mobilapp.a7minuteworkout
 
+import android.annotation.SuppressLint
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
@@ -12,6 +13,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView.LayoutManager
 import com.naszi.mobilapp.a7minuteworkout.databinding.ActivityExerciseBinding
 import java.util.Locale
 
@@ -25,6 +28,7 @@ class ExerciseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var currentExercisePosition = -1
     private var textToSpeech: TextToSpeech? = null
     private var player: MediaPlayer? = null
+    private var exerciseAdapter: ExerciseStatusAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +50,7 @@ class ExerciseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             onBackPressed()
         }
         setupRestView()
+        setupExerciseStatusRecyclerView()
     }
 
     override fun onInit(status: Int) {
@@ -81,6 +86,16 @@ class ExerciseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun speakOut(text: String) {
         textToSpeech?.speak(text, TextToSpeech.QUEUE_ADD, null, "")
+    }
+
+    private fun setupExerciseStatusRecyclerView() {
+        binding?.rvExerciseStatus?.layoutManager = LinearLayoutManager(
+            this,
+            LinearLayoutManager.HORIZONTAL,
+            false
+        )
+        exerciseAdapter = ExerciseStatusAdapter(exerciseList!!)
+        binding?.rvExerciseStatus?.adapter = exerciseAdapter
     }
 
     private fun setupRestView() {
@@ -137,8 +152,11 @@ class ExerciseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 binding?.tvTimer?.text = (10 - restProgress).toString()
             }
 
+            @SuppressLint("NotifyDataSetChanged")
             override fun onFinish() {
                 currentExercisePosition++
+                exerciseList!![currentExercisePosition].isSelected = true
+                exerciseAdapter!!.notifyDataSetChanged()
                 setupExerciseView()
             }
         }.start()
@@ -153,7 +171,11 @@ class ExerciseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 binding?.tvTimerExercise?.text = (30 - exerciseProgress).toString()
             }
 
+            @SuppressLint("NotifyDataSetChanged")
             override fun onFinish() {
+                exerciseList!![currentExercisePosition].isSelected = false
+                exerciseList!![currentExercisePosition].isCompleted = true
+                exerciseAdapter!!.notifyDataSetChanged()
                 if (currentExercisePosition < exerciseList?.size!! - 1) {
                     setupRestView()
                 } else {
